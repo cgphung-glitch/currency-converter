@@ -9,7 +9,7 @@ let rates = {};
 async function loadRates() {
   try {
     // Stable endpoint with ECB source
-    const res = await fetch("https://api.exchangerate.host/latest?source=ecb");
+    const res = await fetch("https://api.frankfurter.app/latest?from=USD");
     const data = await res.json();
 
     if (!data || !data.success || !data.rates) {
