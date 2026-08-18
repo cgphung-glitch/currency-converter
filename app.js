@@ -5,12 +5,15 @@ const result = document.getElementById("result");
 
 let rates = {};
 
+// Load exchange rates
 async function loadRates() {
   try {
-    const res = await fetch("https://api.exchangerate.host/latest?base=USD");
+    // Stable endpoint with ECB source
+    const res = await fetch("https://api.exchangerate.host/latest?source=ecb");
     const data = await res.json();
 
-    if (!data || !data.rates) {
+    if (!data || !data.success || !data.rates) {
+      console.error("API raw response:", data);
       throw new Error("Invalid API response");
     }
 
@@ -35,21 +38,7 @@ async function loadRates() {
   }
 }
 
-
-document.getElementById("swap").onclick = () => {
-  const temp = from.value;
-  from.value = to.value;
-  to.value = temp;
-
-  // Recalculate immediately
-  if (rates[from.value] && rates[to.value]) {
-    const amt = parseFloat(amount.value);
-    const converted = (amt / rates[from.value]) * rates[to.value];
-    result.textContent = `${amt} ${from.value} = ${converted.toFixed(2)} ${to.value}`;
-  }
-};
-
-
+// Convert function
 document.getElementById("convert").onclick = () => {
   const amt = parseFloat(amount.value);
 
@@ -62,5 +51,19 @@ document.getElementById("convert").onclick = () => {
   result.textContent = `${amt} ${from.value} = ${converted.toFixed(2)} ${to.value}`;
 };
 
+// Swap function
+document.getElementById("swap").onclick = () => {
+  const temp = from.value;
+  from.value = to.value;
+  to.value = temp;
 
+  // Recalculate immediately if rates are loaded
+  if (rates[from.value] && rates[to.value]) {
+    const amt = parseFloat(amount.value);
+    const converted = (amt / rates[from.value]) * rates[to.value];
+    result.textContent = `${amt} ${from.value} = ${converted.toFixed(2)} ${to.value}`;
+  }
+};
+
+// Initialize
 loadRates();
