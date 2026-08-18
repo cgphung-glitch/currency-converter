@@ -6,29 +6,61 @@ const result = document.getElementById("result");
 let rates = {};
 
 async function loadRates() {
-  const res = await fetch("https://api.exchangerate.host/latest?base=USD");
-  const data = await res.json();
-  rates = data.rates;
+  try {
+    const res = await fetch("https://api.exchangerate.host/latest?base=USD");
+    const data = await res.json();
 
-  Object.keys(rates).forEach(code => {
-    from.innerHTML += `<option value="${code}">${code}</option>`;
-    to.innerHTML += `<option value="${code}">${code}</option>`;
-  });
+    if (!data || !data.rates) {
+      throw new Error("Invalid API response");
+    }
 
-  from.value = "USD";
-  to.value = "EUR";
+    rates = data.rates;
+
+    // Populate dropdowns
+    const codes = Object.keys(rates).sort();
+    from.innerHTML = "";
+    to.innerHTML = "";
+
+    codes.forEach(code => {
+      from.innerHTML += `<option value="${code}">${code}</option>`;
+      to.innerHTML += `<option value="${code}">${code}</option>`;
+    });
+
+    from.value = "USD";
+    to.value = "EUR";
+
+  } catch (err) {
+    console.error("Rate loading error:", err);
+    result.textContent = "Unable to load currency rates.";
+  }
 }
+
 
 document.getElementById("swap").onclick = () => {
   const temp = from.value;
   from.value = to.value;
   to.value = temp;
+
+  // Recalculate immediately
+  if (rates[from.value] && rates[to.value]) {
+    const amt = parseFloat(amount.value);
+    const converted = (amt / rates[from.value]) * rates[to.value];
+    result.textContent = `${amt} ${from.value} = ${converted.toFixed(2)} ${to.value}`;
+  }
 };
+
 
 document.getElementById("convert").onclick = () => {
   const amt = parseFloat(amount.value);
+
+  if (!rates[from.value] || !rates[to.value]) {
+    result.textContent = "Rates not loaded yet.";
+    return;
+  }
+
   const converted = (amt / rates[from.value]) * rates[to.value];
   result.textContent = `${amt} ${from.value} = ${converted.toFixed(2)} ${to.value}`;
 };
+
 
 loadRates();
