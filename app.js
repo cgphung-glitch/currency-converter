@@ -5,22 +5,18 @@ const result = document.getElementById("result");
 
 let rates = {};
 
-// Load exchange rates
 async function loadRates() {
   try {
-    // Stable endpoint with ECB source
     const res = await fetch("https://api.frankfurter.app/latest?from=USD");
     const data = await res.json();
 
-    if (!data || !data.success || !data.rates) {
-      console.error("API raw response:", data);
+    if (!data || !data.rates) {
       throw new Error("Invalid API response");
     }
 
     rates = data.rates;
+    const codes = Object.keys(rates).concat(data.base).sort();
 
-    // Populate dropdowns
-    const codes = Object.keys(rates).sort();
     from.innerHTML = "";
     to.innerHTML = "";
 
@@ -38,32 +34,29 @@ async function loadRates() {
   }
 }
 
-// Convert function
 document.getElementById("convert").onclick = () => {
   const amt = parseFloat(amount.value);
 
-  if (!rates[from.value] || !rates[to.value]) {
+  if (!rates[to.value]) {
     result.textContent = "Rates not loaded yet.";
     return;
   }
 
-  const converted = (amt / rates[from.value]) * rates[to.value];
-  result.textContent = `${amt} ${from.value} = ${converted.toFixed(2)} ${to.value}`;
-};
-
-// Swap function
-document.getElementById("swap").onclick = () => {
-  const temp = from.value;
-  from.value = to.value;
-  to.value = temp;
-
-  // Recalculate immediately if rates are loaded
-  if (rates[from.value] && rates[to.value]) {
-    const amt = parseFloat(amount.value);
-    const converted = (amt / rates[from.value]) * rates[to.value];
+  if (from.value === "USD") {
+    const converted = amt * rates[to.value];
+    result.textContent = `${amt} ${from.value} = ${converted.toFixed(2)} ${to.value}`;
+  } else {
+    // Convert via USD as base
+    const amtInUSD = amt / rates[from.value];
+    const converted = amtInUSD * rates[to.value];
     result.textContent = `${amt} ${from.value} = ${converted.toFixed(2)} ${to.value}`;
   }
 };
 
-// Initialize
+document.getElementById("swap").onclick = () => {
+  const temp = from.value;
+  from.value = to.value;
+  to.value = temp;
+};
+
 loadRates();
